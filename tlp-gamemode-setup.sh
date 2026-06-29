@@ -19,6 +19,7 @@ rollback() {
   sudo pacman -R --noconfirm tlp tlp-pd gamemode 2>/dev/null && ok "Packages removed" || warn "Nothing to remove"
   sudo pacman -S --noconfirm power-profiles-daemon 2>/dev/null && ok "power-profiles-daemon reinstalled" || warn "Could not reinstall power-profiles-daemon"
   sudo systemctl enable --now power-profiles-daemon.service 2>/dev/null || true
+  sudo rm -f /etc/gamemode.ini
   rm -f ~/.config/gamemode.ini
   rm -f "$ROLLBACK_FILE"
   ok "Rollback complete. Reboot recommended."
@@ -84,13 +85,24 @@ defaultgov=performance
 [custom]
 start=powerprofilesctl set performance
 end=powerprofilesctl set balanced
-
-[gpu]
-apply_gpu_optimisations=accept-responsibility
-gpu_device=0
-amd_performance_level=high
 GAMECONF
 ok "~/.config/gamemode.ini written"
+
+# Detect AMD GPU card number for GameMode GPU optimisations
+AMD_CARD=$(for card in /sys/class/drm/card*/device/vendor; do
+  if [[ "$(cat "$card" 2>/dev/null)" == "0x1002" ]]; then
+    echo "${card#/sys/class/drm/card}" | cut -d/ -f1
+    break
+  fi
+done)
+if [[ -n "$AMD_CARD" ]]; then
+  sudo tee /etc/gamemode.ini > /dev/null <<'GAMECONF'
+[gpu]
+apply_gpu_optimisations=accept-responsibility
+amd_performance_level=high
+GAMECONF
+  ok "/etc/gamemode.ini written (AMD GPU on card${AMD_CARD})"
+fi
 
 # ── Done ────────────────────────────────────────
 touch "$ROLLBACK_FILE"
