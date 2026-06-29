@@ -1,0 +1,7 @@
+# No build artifacts or local editor files to exclude.
+# This file exists to prevent accidental inclusion of system files.
+
+*.swp
+*.swo
+*~
+.DS_Store
