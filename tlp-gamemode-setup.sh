@@ -96,9 +96,10 @@ AMD_CARD=$(for card in /sys/class/drm/card*/device/vendor; do
   fi
 done)
 if [[ -n "$AMD_CARD" ]]; then
-  sudo tee /etc/gamemode.ini > /dev/null <<'GAMECONF'
+  sudo tee /etc/gamemode.ini > /dev/null <<GAMECONF
 [gpu]
 apply_gpu_optimisations=accept-responsibility
+gpu_device=${AMD_CARD}
 amd_performance_level=high
 GAMECONF
   ok "/etc/gamemode.ini written (AMD GPU on card${AMD_CARD})"
