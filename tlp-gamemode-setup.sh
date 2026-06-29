@@ -19,6 +19,7 @@ rollback() {
   sudo pacman -R --noconfirm tlp tlp-pd gamemode 2>/dev/null && ok "Packages removed" || warn "Nothing to remove"
   sudo pacman -S --noconfirm power-profiles-daemon 2>/dev/null && ok "power-profiles-daemon reinstalled" || warn "Could not reinstall power-profiles-daemon"
   sudo systemctl enable --now power-profiles-daemon.service 2>/dev/null || true
+  systemctl --user disable --now gamemoded 2>/dev/null || true
   sudo rm -f /etc/gamemode.ini
   rm -f ~/.config/gamemode.ini
   rm -f "$ROLLBACK_FILE"
@@ -104,6 +105,8 @@ amd_performance_level=high
 GAMECONF
   ok "/etc/gamemode.ini written (AMD GPU on card${AMD_CARD})"
 fi
+
+systemctl --user enable --now gamemoded 2>/dev/null && ok "gamemoded enabled + started" || warn "gamemoded could not be started"
 
 # ── Done ────────────────────────────────────────
 touch "$ROLLBACK_FILE"
