@@ -16,12 +16,12 @@ fail()    { echo -e " ${R}✘${N} $1"; exit 1; }
 
 rollback() {
   banner "ROLLING BACK"
-  sudo systemctl unmask power-profiles-daemon.service 2>/dev/null || true
-  sudo systemctl enable --now power-profiles-daemon.service 2>/dev/null || true
   sudo pacman -R --noconfirm tlp tlp-pd gamemode 2>/dev/null && ok "Packages removed" || warn "Nothing to remove"
+  sudo pacman -S --noconfirm power-profiles-daemon 2>/dev/null && ok "power-profiles-daemon reinstalled" || warn "Could not reinstall power-profiles-daemon"
+  sudo systemctl enable --now power-profiles-daemon.service 2>/dev/null || true
   rm -f ~/.config/gamemode.ini
   rm -f "$ROLLBACK_FILE"
-  ok "power-profiles-daemon restored. Reboot recommended."
+  ok "Rollback complete. Reboot recommended."
 }
 
 if [[ "${1:-}" == "--rollback" ]]; then rollback; exit 0; fi
@@ -30,17 +30,15 @@ if [[ -f "$ROLLBACK_FILE" ]]; then
   exit 1
 fi
 
+# ── Remove conflicting PPD ──────────────────────
+banner "REMOVING POWER-PROFILES-DAEMON"
+sudo pacman -R --noconfirm power-profiles-daemon 2>/dev/null && ok "power-profiles-daemon removed" || warn "power-profiles-daemon not installed"
+sudo systemctl mask power-profiles-daemon.service 2>/dev/null || true
+
 # ── Install ────────────────────────────────────
 banner "INSTALLING PACKAGES"
 sudo pacman -S --noconfirm tlp tlp-pd gamemode
 ok "tlp, tlp-pd, gamemode installed"
-
-# ── Disable PPD ────────────────────────────────
-banner "DISABLING POWER-PROFILES-DAEMON"
-sudo systemctl stop power-profiles-daemon.service
-sudo systemctl disable power-profiles-daemon.service
-sudo systemctl mask power-profiles-daemon.service
-ok "power-profiles-daemon stopped + masked"
 
 # ── Configure TLP ──────────────────────────────
 banner "CONFIGURING TLP"
